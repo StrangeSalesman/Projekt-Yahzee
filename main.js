@@ -1,0 +1,624 @@
+/**
+ * Class representing a Yahtzee game, per player.
+ * @class
+ * @property {Number[]} dice - Array to store the dice that are rolled
+ * @property {Object} state - Object to store the current state of the game
+ * @property {Number} state.diceCount - Number of dice to roll
+ * @property {Number} state.attemptsLeft - Number of attempts left
+ * @property {Number} state.points.total - Sum of the points
+ * @property {Boolean} state.bonusCalculated - Whether the bonus has been calculated
+ * @property {Number[]} diceKeep - Array to store the dice that are kept, used for calculating the score
+ * @property {Object} remainingSection - Object to store the remaining sections of the game
+ * @property {String[]} remainingSection.upperSection - Remaining sections of the upper section
+ * @property {String[]} remainingSection.lowerSection - Remaining sections of the lower section
+ * @example const yahtzee = new Yahtzee()
+ */
+class Yahtzee {
+    state = {
+        name: "Player 1",
+        diceCount: 5,
+        attemptsLeft: 3,
+        points: {
+            upperSection: 0,
+            total: 0
+        },
+        bonusCalculated: false,
+    };
+    diceKeep = []
+
+    // Define the remaining sections of the game; this ensures we can't select the same section twice
+    remainingSection = {
+        upperSection: ["ones", "twos", "threes", "fours", "fives", "sixes"],
+        lowerSection: ["threeOfAKind", "fourOfAKind", "fullHouse", "smallStraight", "largeStraight", "yahtzee", "chance"]
+    }
+
+    /**
+     * Create a Yahtzee game, optionally with a name of the player this game belongs to.
+     * @param name {String} The name of the player
+     */
+    constructor(name = "Player 1") {
+        this.state.name = name;
+    }
+
+    /**
+     * Sums the dice array.
+     * @returns {Number} The sum of the dice array
+     */
+    sum() {
+        let sum = 0;
+        this.diceKeep.forEach(number => {
+            sum += number
+        });
+        return sum
+    }
+
+    /**
+     * Selects the dice to keep and updates the remaining dice count.
+     * @param dice The dice HTMLElement to keep
+     */
+    selectDice(dice) {
+        let diceNumber;
+        for (const className of dice.classList) {
+            if (className.includes("dice-")) {
+                diceNumber = parseInt(className.split("-")[1]);
+                break
+            }
+        }
+        this.diceKeep.push(diceNumber)
+        this.state.diceCount--;
+    }
+
+    /**
+     * Rolls the dice and decrements the attempts left counter.
+     * @returns {Number[]} Array of dice rolled
+     */
+    rollDice() {
+        // Roll the dice and store them in the dice array
+        let diceRolled = [];
+        for (let i = 0; i < this.state.diceCount; i++) {
+            diceRolled.push(Math.floor(Math.random() * 6) + 1);
+        }
+        this.state.attemptsLeft--;
+
+        // If no attempts are left, add the remaining dice to the diceKeep array,
+        // as it will be used for the score calculation
+        if (this.state.attemptsLeft === 0) {
+            this.diceKeep.push(...diceRolled)
+        }
+        return diceRolled;
+    }
+
+    /**
+     * Resets the attempts left and dice counters. Used at the end of each run.
+     */
+    nextRun() {
+        this.state.attemptsLeft = 3;
+        this.state.diceCount = 5;
+        this.diceKeep = []
+    }
+
+    /**
+     * Calculate the score for the upper categories.
+     * @param {Number} multiplier The multiplier for the category (1-6)
+     * @returns {Number} The points gained for this category
+     */
+    onesToSixes(multiplier) {
+        this.selectionDone("upperSection", this.remainingSection.upperSection[multiplier - 1])
+        const score = this.diceKeep.filter(number => number === multiplier).length * multiplier;
+        this.addPoints(score, true)
+        this.nextRun()
+        return score
+    }
+
+    /**
+     * Calculate the score for the chance category
+     * @returns {Number} The points gained for this category
+     */
+    chance() {
+        const score = this.sum();
+        this.selectionDone("lowerSection", "chance")
+        this.addPoints(score, false)
+        this.nextRun()
+        return score
+    }
+
+    /**
+     * Calculate the score for the Yahtzee category
+     * @returns {Number} The points gained for this category
+     */
+    yahtzee() {
+        const score = this.hasHitCountPoints(5)
+        this.selectionDone("lowerSection", "yahtzee")
+        this.addPoints(score, false)
+        this.nextRun()
+        return score
+    }
+
+    /**
+     * Calculate the score for the full house category
+     * @returns {Number} The points gained for this category
+     */
+    fullHouse() {
+        const counts = {}
+        this.diceKeep.forEach(function (x) {
+            counts[x] = (counts[x] || 0) + 1;
+        });
+
+        const results = {
+            2: 0, 3: 0
+        }
+
+        // Loop through the counts and check if we have a full house,
+        // while ensuring both being an integer when comparing values
+        Object.keys(counts).forEach((key) => {
+            Object.keys(results).forEach((amount) => {
+                if (parseInt(counts[key]) === parseInt(amount)) {
+                    results[amount] = counts[key]
+                }
+            })
+        })
+
+        this.selectionDone("lowerSection", "fullHouse")
+
+        let score
+        if (results[2] === 0 || results[3] === 0) {
+            score = 0
+        } else {
+            score = 25
+        }
+        this.addPoints(score, false)
+        this.nextRun()
+        return score
+    }
+
+    /**
+     * Calculate the score for the four of a kind category
+     * @returns {Number} The points gained for this category
+     */
+    fourOfAKind() {
+        const score = this.hasHitCountPoints(4)
+        this.selectionDone("lowerSection", "fourOfAKind")
+        this.addPoints(score, false)
+        this.nextRun()
+        return score
+    }
+
+    /**
+     * Calculate the score for the three of a kind category
+     * @returns {Number} The points gained for this category
+     */
+    threeOfAKind() {
+        const score = this.hasHitCountPoints(3)
+        this.selectionDone("lowerSection", "threeOfAKind")
+        this.addPoints(score, false)
+        this.nextRun()
+        return score
+    }
+
+    /**
+     * Calculate the score for the small straight category
+     * @returns {Number} The points gained for this category
+     */
+    smallStraight() {
+        this.selectionDone("lowerSection", "smallStraight")
+        let score;
+        this.isValidStraight(4) ? score = 30 : score = 0
+        this.addPoints(score, false)
+        this.nextRun()
+        return score
+    }
+
+    /**
+     * Calculate the score for the large straight category
+     * @returns {Number} The points gained for this category
+     */
+    largeStraight() {
+        this.selectionDone("lowerSection", "largeStraight")
+        let score;
+        this.isValidStraight(5) ? score = 40 : score = 0
+        this.addPoints(score, false)
+        this.nextRun()
+        return score
+    }
+
+    /**
+     * Helper function to remove the selected method from the remaining section
+     * @param section The just completed section to remove from the remaining section list
+     * @param method The method that was just completed (ones, twos, etc.)
+     */
+    selectionDone(section, method) {
+        const sectionIndex = this.remainingSection[`${section}`].indexOf(`${method}`)
+        this.remainingSection[`${section}`].splice(sectionIndex, 1)
+    }
+
+    /**
+     * Calculate the bonus points if the upper section sum is greater than 63 and update all
+     * corresponding sections.
+     */
+    bonusPoints() {
+        const bonusTextElement = document.getElementById('score-bonus-1')
+        const upperScoreSumElement = document.getElementById("upper-sum-1")
+        if (this.state.points.upperSection > 63) {
+            bonusTextElement.innerText = "35"
+            this.addPoints(35, false)
+        } else {
+            bonusTextElement.innerText = "None :("
+        }
+        upperScoreSumElement.innerText = this.state.points.upperSection
+        this.state.bonusCalculated = true
+    }
+
+    /**
+     * Check if the dice array contains a certain number of the same dice.
+     * @param count The number of dice to check for
+     * @return {number} The score if the dice array contains the given number of dice, 0 otherwise
+     */
+    hasHitCountPoints(count) {
+        const counts = {}
+        this.diceKeep.forEach(function (x) {
+            counts[x] = (counts[x] || 0) + 1;
+        });
+
+        let result
+        Object.keys(counts).forEach((number) => {
+            if (counts[number] >= count) {
+                result = number
+            }
+        })
+
+        let score
+        if (result !== undefined) {
+            // Special case: this is a Yahtzee
+            if (count === 5) {
+                score = 50
+            } else {
+                score = this.sum()
+            }
+        } else {
+            score = 0
+        }
+
+        return score
+    }
+
+    /**
+     * Check if the dice array contains a straight of a certain kind.
+     * @param kind The kind of straight to check for (4,5)
+     * @return {boolean} A boolean indicating whether the dice array contains a straight of the given kind
+     */
+    isValidStraight(kind) {
+        let straight = 0;
+        this.diceKeep = [1, 5, 2, 3, 4];
+        let dice = this.diceKeep.sort();
+        straight = 1;
+        for (let i = 0; i < dice.length; i++) {
+            if (dice[i] + 1 === dice[i + 1]) {
+                straight++;
+            }
+        }
+        return straight >= kind;
+    }
+
+    /**
+     * Add points to the total score and the upper section score, if applicable.
+     * @param score The score to add
+     * @param isUpper A boolean indicating whether the score should be added to the upper section
+     */
+    addPoints(score, isUpper) {
+        this.state.points.total += score;
+        if (isUpper) {
+            this.state.points.upperSection += score;
+        }
+    }
+}
+
+/**
+ * Class representing a Yahtzee game with multiple players.
+ * @class
+ * @property {Object} players - Object to store the players in the game
+ * @property {Object} state - Object to store the current state of the game
+ * @property {Number} state.playerTurn - The current player's turn
+ * @example const yahtzeeGame = new YahtzeeGame("Player 1", "Player 2")
+ */
+class YahtzeeGame {
+    players = {}
+    state = {
+        playerTurn: 0
+    }
+
+    /**
+     * Create a Yahtzee game with a number of players.
+     * It allows creating a game with multiple players, but the current implementation hardcodes it to two players.
+     * @param names The names of the players as an array of strings
+     */
+    constructor(...names) {
+        for (const name of names) {
+            const index = Object.keys(this.players).length === 0 ? 0 : Object.keys(this.players).length++
+            this.players[`${index}`] = new Yahtzee(name)
+        }
+    }
+
+    /**
+     * Get the current player Yahtzee object.
+     * @return {*} The current player object
+     */
+    currentPlayer() {
+        return this.players[this.state.playerTurn]
+    }
+
+    /**
+     * Move to the next player in the game.
+     */
+    nextPlayer() {
+        const isLastPlayer = this.state.playerTurn === Object.keys(this.players).length - 1
+        this.state.playerTurn = isLastPlayer ? 0 : this.state.playerTurn + 1
+    }
+
+    /**
+     * Updates the remaining roll count on the page including correct pluralization.
+     * @param {number} attemptsLeft - The number of attempts left.
+     */
+    updateRemainingRollCount(attemptsLeft) {
+        document.getElementById('roll-count').innerText = attemptsLeft.toString()
+        document.getElementById('roll-count-lang').innerText = attemptsLeft !== 1 ? "times" : "time"
+    }
+
+    /**
+     * Finish the rolling dice phase by disabling the roll and keep buttons.
+     * Also enables the score buttons that are not filled by the current player yet.
+     */
+    finishRollingDicePhase() {
+        const keepButtons = document.querySelectorAll('.innercontainer_lock');
+        const rollDice = document.getElementById('roll-button')
+
+        rollDice.disabled = true;
+        keepButtons.forEach(button => {
+            button.disabled = true;
+        });
+
+        // Enable all score buttons that are not filled yet
+        document.querySelectorAll('td > button').forEach(button => {
+            button.disabled = button.classList.contains(`filledBy-${yahtzeeGame.state.playerTurn}`);
+        });
+    }
+
+    /**
+     * Finish the current run by updating the score and resetting the dice and buttons.
+     */
+    finishRun() {
+        const keepButtons = document.querySelectorAll('.innercontainer_lock');
+        const rollDice = document.getElementById('roll-button')
+        const scoreDisplay = document.getElementById('score-info')
+        const scoreButtons = document.querySelectorAll('td > button')
+        const player = this.currentPlayer()
+
+        scoreDisplay.innerText = player.state.points.total
+        rollDice.disabled = false
+        keepButtons.forEach(button => {
+            const number = button.id.replace(/\D/g, '');
+            button.disabled = true
+            const dice = document.getElementById(`dice${number}`);
+            dice.classList.remove("keeping", "disabled");
+            dice.innerText = ""
+        })
+        scoreButtons.forEach(button => {
+            button.disabled = true;
+        })
+
+        this.updateRemainingRollCount(player.state.attemptsLeft);
+
+        // React to special stages of the game, e.g., a fully filled upper section
+        if (player.remainingSection.upperSection.length === 0 && !player.state.bonusCalculated) {
+            player.bonusPoints()
+        } else if (player.remainingSection.upperSection.length === 0 && player.remainingSection.lowerSection.length === 0) {
+            // In case all sections are filled, we want to end the game
+            alert(`Game over! Your final score is ${player.state.points.total}.`)
+        }
+
+        scoreDisplay.innerText = player.state.points.total
+        scoreButtons.forEach(button => {
+            button.disabled = true
+        })
+    }
+
+    /**
+     * Update the dice display based on the dice elements.
+     * @param diceElements
+     */
+    updateDiceDisplay(diceElements) {
+        for (let element in diceElements) {
+            // If we are keeping an element, we don't want to change the dice class
+            if (diceElements[element].classList.contains("keeping")) {
+                continue;
+            }
+
+            // Ensure no dice classes are set
+            diceElements[element].classList = ["innercontainer"];
+
+            switch (diceElements[element].innerText) {
+                case "1":
+                    diceElements[element].classList.add('dice-1');
+                    break;
+                case "2":
+                    diceElements[element].classList.add('dice-2');
+                    break;
+                case "3":
+                    diceElements[element].classList.add('dice-3');
+                    break;
+                case "4":
+                    diceElements[element].classList.add('dice-4');
+                    break;
+                case "5":
+                    diceElements[element].classList.add('dice-5');
+                    break;
+                case "6":
+                    diceElements[element].classList.add('dice-6');
+                    break;
+            }
+
+            // We don't need this anymore, as the dice are now displayed in the inner container
+            diceElements[element].innerText = "";
+        }
+    }
+
+    /**
+     * Update the current player display on the page.
+     */
+    updateCurrentPlayer() {
+        const currentPlayerElement = document.getElementById('current-player')
+        const scoreDisplay = document.getElementById('score-info')
+        currentPlayerElement.innerText = this.currentPlayer().state.name
+        scoreDisplay.innerText = this.currentPlayer().state.points.total
+    }
+
+    /**
+     * Initialize the game by setting up event listeners and updating the current player.
+     */
+    init() {
+        this.setupEventListeners()
+        this.updateCurrentPlayer()
+        for (const player in this.players) {
+            const element = document.getElementById(`name-player-${parseInt(player) + 1}`)
+            element.innerText = this.players[`${player}`].state.name
+        }
+    }
+
+    /**
+     * Set up event listeners for the game.
+     */
+    setupEventListeners() {
+        // Add event listener to each "Keep" button
+        const keepButtons = document.querySelectorAll('.innercontainer_lock');
+        const keepButtonsFn = (button) => {
+            const player = this.currentPlayer()
+
+            // Extract the number from the button's id
+            const number = button.id.replace(/\D/g, '');
+
+            // Find the corresponding dice
+            const dice = document.getElementById(`dice${number}`);
+
+            // Toggle the dices background color between green and beige
+            dice.classList.add("keeping")
+            button.disabled = true
+
+            // Select the dice via our Yahtzee class
+            player.selectDice(dice)
+        }
+        const rollDiceFn = () => {
+            const player = this.currentPlayer();
+
+            // Create a (non-referencing) copy of the result array to avoid modifying the original array
+            const results = player.rollDice();
+
+            // Update each field that hasn't been selected already
+            for (const field in diceFields) {
+                const button = document.getElementById(`keep${field}`);
+                const currentField = diceFields[`${field}`];
+
+                if (!currentField.classList.contains('keeping')) {
+                    diceFields[field].innerText = results.pop().toString();
+                }
+            }
+
+            this.updateDiceDisplay(diceFields);
+            this.updateRemainingRollCount(player.state.attemptsLeft);
+
+            // Disable roll and keep buttons when no attempts are left
+            if (player.state.attemptsLeft === 0) {
+                this.finishRollingDicePhase()
+            } else if (player.state.attemptsLeft !== 3) {
+                document.querySelectorAll('.innercontainer_lock').forEach(button => {
+                    const number = button.id.replace(/\D/g, '');
+                    if (!diceFields[`${number - 1}`].classList.contains("keeping")) {
+                        button.disabled = false;
+                    }
+                });
+            } else {
+                // Optionally, ensure score buttons are disabled when there are attempts left
+                document.querySelectorAll('td > button').forEach(button => {
+                    button.disabled = true;
+                });
+            }
+        }
+        const scoreButtonsFn = (button) => {
+            const player = this.currentPlayer();
+
+            // Call the function with the same name as the button's id
+            const scoreElement = document.getElementById(`score-${button.id}-${yahtzeeGame.state.playerTurn + 1}`)
+            let score = 0
+            switch (button.id) {
+                case "ones":
+                    score = player.onesToSixes(1);
+                    break;
+                case "twos":
+                    score = player.onesToSixes(2);
+                    break;
+                case "threes":
+                    score = player.onesToSixes(3);
+                    break;
+                case "fours":
+                    score = player.onesToSixes(4);
+                    break;
+                case "fives":
+                    score = player.onesToSixes(5);
+                    break;
+                case "sixes":
+                    score = player.onesToSixes(6);
+                    break;
+                case "ThreeOfAKind":
+                    score = player.threeOfAKind();
+                    break;
+                case "FourOfAKind":
+                    score = player.fourOfAKind();
+                    break;
+                case "FullHouse":
+                    score = player.fullHouse();
+                    break;
+                case "SmallStraight":
+                    score = player.smallStraight();
+                    break;
+                case "LargeStraight":
+                    score = player.largeStraight();
+                    break;
+                case "Yahtzee":
+                    score = player.yahtzee();
+                    break;
+                case "Chance":
+                    score = player.chance();
+                    break;
+            }
+            button.classList.add(`filledBy-${yahtzeeGame.state.playerTurn}`)
+            scoreElement.innerText = score.toString();
+            this.finishRun()
+            this.updateCurrentPlayer()
+        }
+        const diceFields = [document.getElementById('dice1'), document.getElementById('dice2'), document.getElementById('dice3'), document.getElementById('dice4'), document.getElementById('dice5')]
+        const rollDice = document.getElementById('roll-button');
+        const scoreButtons = document.querySelectorAll('td > button');
+
+        rollDice.addEventListener('click', rollDiceFn.bind(this));
+        keepButtons.forEach(button => {
+            button.addEventListener('click', keepButtonsFn.bind(this, button));
+        });
+        scoreButtons.forEach((button) => {
+            button.addEventListener('click', scoreButtonsFn.bind(null, button))
+        })
+
+        document.querySelectorAll('td > button').forEach(button => {
+            button.disabled = true;
+        })
+        document.getElementById('resetGameButton').addEventListener('click', () => {
+            location.reload();
+        });
+    }
+}
+
+// Instantiate the Yahtzee class with hardcoded player names
+const yahtzeeGame = new YahtzeeGame("Player 1")
+
+// Add event listener to the DOMContentLoaded event to ensure the DOM is fully loaded before we start the game
+// This is necessary to ensure all elements are available when we try to access them
+document.addEventListener('DOMContentLoaded', () => {
+    yahtzeeGame.init()
+});
