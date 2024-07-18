@@ -208,7 +208,8 @@ tbody tr:hover {
 
 /*Tooltip */
 
-.tooltip {
+ /* Tooltip container */
+ .tooltip {
     position: relative;
     display: inline-block;
     border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
@@ -217,8 +218,8 @@ tbody tr:hover {
   /* Tooltip text */
   .tooltip .tooltiptext {
     visibility: hidden;
-    width: 300px;
-    background-color: #555;
+    width: 120px;
+    background-color: #664d96c7;
     color: #fff;
     text-align: center;
     padding: 5px 0;
@@ -229,7 +230,7 @@ tbody tr:hover {
     z-index: 1;
     bottom: 125%;
     left: 50%;
-    margin-left: -250px;
+    margin-left: -60px;
   
     /* Fade in tooltip */
     opacity: 0;
@@ -252,7 +253,7 @@ tbody tr:hover {
   .tooltip:hover .tooltiptext {
     visibility: visible;
     opacity: 1;
-  }
+  } 
 
   .rules{
     background-color: lightgrey;
