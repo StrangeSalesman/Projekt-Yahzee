@@ -18,6 +18,7 @@
 <div class="main-container">
     <div class="outtercontainer_left">
         <div class="outtercontainer">
+            
             <button id="roll-button" class="roll">ROLL DICE</button>
         </div>
         <div class="outtercontainer">
@@ -41,6 +42,7 @@
         </div>
        
         <div class="score">Your Score is: <a id="score-info">0</a></div>
+       
 
     </div>
 
@@ -49,13 +51,19 @@
             <thead>
             <tr>
                 <th>Category</th>
-                <th id="name-player-1">Player 1</th>
+                <th>Explanation</th>
+                <th id="name-player-1">Score</th>
                 <th>Action</th>
             </tr>
             </thead>
             <tbody>
             <tr>
                 <td>Ones</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Only ones count</span>
+                    </div>
+                </td>
                 <td id="score-ones-1"></td>
                 <td>
                     <button id="ones" disabled="disabled" class="upper">Score</button>
@@ -63,6 +71,11 @@
             </tr>
             <tr>
                 <td>Twos</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Only twos count</span>
+                    </div>
+                </td>
                 <td id="score-twos-1"></td>
                 <td>
                     <button id="twos" disabled="disabled" class="upper">Score</button>
@@ -70,6 +83,11 @@
             </tr>
             <tr>
                 <td>Threes</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Only threes count</span>
+                    </div>
+                </td>
                 <td id="score-threes-1"></td>
                 <td>
                     <button id="threes" disabled="disabled" class="upper">Score</button>
@@ -77,6 +95,11 @@
             </tr>
             <tr>
                 <td>Fours</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Only fours count</span>
+                    </div>
+                </td>
                 <td id="score-fours-1"></td>
                 <td>
                     <button id="fours" disabled="disabled" class="upper">Score</button>
@@ -84,6 +107,11 @@
             </tr>
             <tr>
                 <td>Fives</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Only fives count</span>
+                    </div>
+                </td>
                 <td id="score-fives-1"></td>
                 <td>
                     <button id="fives" disabled="disabled" class="upper">Score</button>
@@ -91,23 +119,39 @@
             </tr>
             <tr>
                 <td>Sixes</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Only sixes count</span>
+                    </div>
+                </td>
                 <td id="score-sixes-1"></td>
                 <td>
                     <button id="sixes" disabled="disabled" class="upper">Score</button>
                 </td>
             </tr>
             <tr>
-                <td>Bonus (receive 35 points if you get to 63 in the upper Section)</td>
+                <td>Bonus</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Foreceive 35 points if you get to 63 in the upper Section</span>
+                    </div>
+                </td>
                 <td id="score-bonus-1"></td>
                 <td></td>
             </tr>
             <tr>
                 <td>Score upper Section</td>
+                <td></td>
                 <td id="upper-sum-1"></td>
                 <td></td>
             </tr>
             <tr>
                 <td>Three of a Kind</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Three of a kind are 3 of the same numbers. The remaining numbers are getting added as points</span>
+                    </div>
+                </td>
                 <td id="score-ThreeOfAKind-1"></td>
                 <td>
                     <button id="ThreeOfAKind" disabled="disabled" class="lower">Score</button>
@@ -116,6 +160,11 @@
             </tr>
             <tr>
                 <td>Four of a Kind</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">Four of a kind are 4 of the same numbers. The fith number is getting added as points</span>
+                    </div>
+                </td>
                 <td id="score-FourOfAKind-1"></td>
                 <td>
                     <button id="FourOfAKind" disabled="disabled" class="lower">Score</button>
@@ -123,6 +172,11 @@
             </tr>
             <tr>
                 <td>Full House</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">A Full House is 3 of a kind and 2 of a kind</span>
+                    </div>
+                </td>
                 <td id="score-FullHouse-1"></td>
                 <td>
                     <button id="FullHouse" disabled="disabled" class="lower">Score</button>
@@ -130,6 +184,11 @@
             </tr>
             <tr>
                 <td>Small Straight</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">A Small Straight is 4 numbers in a chronological sequence</span>
+                    </div>
+                </td>
                 <td id="score-SmallStraight-1"></td>
                 <td>
                     <button id="SmallStraight" disabled="disabled" class="lower">Score</button>
@@ -137,6 +196,11 @@
             </tr>
             <tr>
                 <td>Large Straight</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">A Large Straight is 5 numbers in a chronological sequence</span>
+                    </div>
+                </td>
                 <td id="score-LargeStraight-1"></td>
                 <td>
                     <button id="LargeStraight" disabled="disabled" class="lower">Score</button>
@@ -144,6 +208,11 @@
             </tr>
             <tr>
                 <td>Yahtzee</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">A Yahtzee is five-of-a-kind and scores 50 points, the highest of any category.</span>
+                    </div>
+                </td>
                 <td id="score-Yahtzee-1"></td>
                 <td>
                     <button id="Yahtzee" disabled="disabled" class="lower">Score</button>
@@ -151,10 +220,24 @@
             </tr>
             <tr>
                 <td>Chance</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip"> 
+                        <span class="tooltiptext">A Chance just summarizes all of you throws together</span>
+                    </div>
+                </td>
                 <td id="score-Chance-1"></td>
                 <td>
                     <button id="Chance" disabled="disabled" class="lower">Score</button>
                 </td>
+            </tr>
+            <tr class="rules">
+                <td>Ruleset</td>
+                <td>
+                    <div class="tooltip"><img src="assets/info-circle.svg" alt="Info-Tooltip">
+                    <span class="tooltiptext">The objective of the game is to score points by rolling five dice to make certain combinations. The dice can be rolled up to three times in a turn to try to make various scoring combinations. After each round, the player chooses which scoring category is to be used for that round. Once a category has been used in the game, it cannot be used again. The scoring categories have varying point values, some of which are fixed values and others for which the score depends on the value of the dice. You can keep dice by locking them so you don't loose the min the next rounds </span>
+                    </div> 
+                </td>
+                <td></td>
             </tr>
             </tbody>
         </table>
