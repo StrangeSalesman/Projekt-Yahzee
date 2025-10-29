@@ -414,7 +414,7 @@ class YahtzeeGame {
             player.bonusPoints()
         } else if (player.remainingSection.upperSection.length === 0 && player.remainingSection.lowerSection.length === 0) {
             // In case all sections are filled, we want to end the game
-            if(player.state.points.total >= 200) {
+            if(player.state.points.total >= 100) {
                 alert(`Fine you beat me! Your final score is ${player.state.points.total}. The Pasword is "Würfelglück"`)
             }
             else {
